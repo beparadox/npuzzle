@@ -1,0 +1,274 @@
+\documentclass[a4, 12pt]{article}
+\usepackage{mystyles}
+\usepackage{makeidx}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{alltt}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\begin{document}
+\input{./title.tex}
+
+
+\begin{abstract}
+The N-Puzzle is a toy problem that is useful in testing and developing search strategies to aid in the development of problem solving techniques. \textit{Heuristics} are of great importance in a wide variety of applications including graph search . Generally defined a rule of thumb for making decisions that are learned from experience, heuristics are a sort of guide used in obtaining a solution a problem. In graph search in particular, heuristics are of use in guiding search in order to reduce the number of states explored needed to find the optimal solution, a necessity in a large state space. The A* algorithm in particular uses heuristics to determine its search strategy. It can be used to solve instances of the 8-puzzle. We attempt to develop subsymbolic heuristics for A* using a neural network trained with backpropagation. We summarize our methodology and results. 
+\end{abstract}
+
+\section{Problems: An Overview}
+What is a problem? We face countless throughout the course of our lives. Difficult questions on a math test, what to wear to an interview or formal occasion, how to obtain money for rent, dealing with an illness, avoiding the playground bully: all of these are examples of problems faced in day-to-day life (some more pressing than others!).  A problem can be informally thought of as a question to be answered, a paradox to be resolved, an obstacle to overcome, or even a situation to be avoided. A more specific definition of a problem is a scenario in which an \textit{agent} is able to differentiate and recognize a preferred state to its current one, and decides upon a course of action to attempt to reach this desired state. This 'desired state' is also known as the \textit{goal}. \\
+
+Formally, a problem is a defined as containing five components. 
+\begin{itemize}
+\item An initial state that an agent starts in, as well as a goal state to reach
+\item Possible \textbf{actions} available to an agent. Given a particular state \textit{S}, return the set of actions available to the agent
+\item  A \textbf{transition model}, which specifies the resulting state from applying action \textit{A} in state \textit{S}
+
+\item A \textbf{goal test} which detects when we've achieved the goal state
+
+\item A \textbf{path cost} function, which tracks the cost of reaching the current state we're in.
+\end{itemize}
+
+Giving a rigorous formulation of a problem gives us the means to perform rigorous analysis on the problem and help determine the boundaries to what we can and can not do in our attempt to solve the problem. \\
+
+
+\subsubsection{Toy Problems: Introduction to the N-Puzzle}
+\textit{Real problems} are generally those problems that affect our personal well-being in a day-to-day setting; they have real consequences to affect our well-being. Real problems are dealt with on the fly without time for detailed analysis, making decisions based on 1) what we've learned in the past and 2) the details of the current situation. 
+ From a theoretical perspective, it's easier to analyze complex real problems by first examining simpler, easy-to-understand problems that have little to no consequence in our day to day lives. The particular toy-problem to be introducing for this paper is known as the N-Puzzle. \\
+
+The N-puzzle, where $N$ is equal to one less than the square of a positive integer (so $N = n^2 - 1$ for $n \in Z_+$), consists of a square block ($n \times n$) of $N$ tiles labeled from $1,2, \cdots N$, plus an 'empty space'. Tiles can only be moved one space at a time, up, down, left or right, and only by exchanging it's place with the blank space (obviously the tile must be adjacent to the blank space in order to be moved). The objective is to arrange the tiles in numeric order, from left to right, top to bottom, with the blank space being in the bottom right corner (see Figure 1 and Figure 2 below). \\
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=.4\linewidth]{npuzzle.png}
+  \captionof{figure}{Sample 8-puzzle}
+  \label{fig:sub1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=.4\linewidth]{npuzzle_solution.png}
+  \captionof{figure}{Solved 8-puzzle}
+  \label{fig:sub2}
+\end{minipage}
+\end{figure}
+
+The N-Puzzle is a useful toy problem because the state space grows exponentially as $n$ increases. The number of distinct, allowable states for the N-puzzle is $(N + 1)!/2$. It can be shown that exactly half of all permutations of the first $N + 1$ integers are acceptable states for an N-Puzzle. The reasoning is sketched later on. Below is a table containing the first 4 possible N-Puzzles, and the number of states they contain. This makes the N-Puzzle a good canidate for testing new graph search algorithms. \\
+
+\begin{table}[H]
+\centering
+\caption{State space increase as N grows}
+\begin{tabular}{c c r}
+  n & N-Puzzle & number of states \\
+  \hline
+  2 & 3-Puzzle & 3 \\
+ 
+  3 & 8-Puzzle & 181,440 \\
+
+  4 & 15-Puzzle & $\approx$ 1 trillion \\
+
+  5 & 24-Puzzle & $7.76 \times 10^{24}$ \\
+\end{tabular}
+\end{table}
+
+In a search space with a trillion possible states, it becomes apparent that something more than brute force search is required. 
+
+
+\section{Graph search and heuristics}
+Graph searches attempt to search a \textit{state space} for a goal state. The search forms a \textbf{search tree} starting at the initial state, and branching out to new states by using actions available in the current state to expandit, leading to the generation of new states. The set of states avaiable to be expanded is known as the \textbf{frontier}, the states already expanded known as the \textbf{explored set}. The manner is which the next state from the frontier is choosen for expansion is known as the \textbf{search strategy}. The reason for the explored set is to avoid loops while searching for a solution, or else the solution may never terminate.   \\
+
+As noted before, the frontier is a data structure which holds the nodes to be expanded. The search stategy determines how the frontier is ordered. Nodes are placed in the frontier as they are generated. Different data structures can be used to order the frontier, but generally some type of queue is used. Breadth-First Search uses a FIFO queue, whereas Depth-first search uses a LIFO queue to ordere the frontier, whereas other search strategies may use a priority queue in which each node is given a value and the queue is ordered in either ascending or descending order. Some search strategies use a \textbf{cost function} to assign a node a value based on the cost to reach that node, or other factors such as the predicted distance to the goal. For example, for each node expanded during search, we can determine the path so far to reach that node, and order the frontier using this value (call it $f(n)$). \\
+
+As noted before, for large state spaces the number of nodes expanded and explored before finding a solution can lead to very slow results. So a more intelligent method of finding the goal state is required, hence the use of \textbf{heuristics}. A \textit{heuristic} is generally defined as a rule of thumb or a guideline used in attempting to solve a problem and are usually discovered and refined through experience. Graph functions may use  a heuristic to help order the frontier. We will examine such a search algorithm in the A* algorithm.\\ 
+\subsection{A* algorithm}
+
+The A* algorithm is an example of a search algorithm that employs heuristics. The cost function for the algorithms is defined as $f(n) = g(n) + h(n)$, where $g(n)$ is the path-cost to reach node $n$ from the initial state, and $h(n)$ is the estiated cost of the optimal (lowest cost) from $n$ to the goal state, so $f(n)$ can also be thought of as the estimated cost of the cheapest solution through $n$. It turns out that $A*$ is both a complete (meaning it will always locate a soluton if one exists) and optimal (find the shortest path solution) if the heuristic $h(n)$ is \textbf{admissable} and in the case of graph search, \textbf{consistent.}. Admissibility means that at no point during search will the heurstic function overestimate the cost to the reach the goal node. Consistency means the the function is nondreasing and never takes a step backwords.  \\
+
+\subsection{Back to the N-Puzzle}
+The N-Puzzle generally requires a heuristic-based graph search algorithm to successfully find optimal solutions (although an intelligent human being can no doubt do the same). Both Iterative-Deepening and A* can be used to successfully solved random instances of the N-Puzzle, although for $n > 4$, the search space grows so large it becomes difficult to find a solution in a reasonable amount of time. \\ 
+
+The heuristics most commonly used in conjunction with the N-Puzzle are the \textbf{Manhattan Distance} and the \textbf{misplaced-tiles} heuristics. To understand the Manhattan Distance for a particular tile in the N-puzzle, considers two different states for the tile: 1) It's current location in the puzzle, and 2) it's location in the goal configuartion. In each case, there exists a coordinate system for the grid (seefigure below) in which the upper left corner is (0,0), and the bottom right is (n,n). For the current state, say the position of tile $T$ in the current state is is $(x_c, y_c)$, and T's position in the goal configuration is $(x_g, y_g)$; then $md(T) = |x_c - x_g| + |y_c - x_c|$. In other words, take the absolute value of differences in x-coordinates plus the absolute value of the difference in y-coordinates. It turns out that the manhattan distance heuristic is admissable and consistent (although we'll leave out the proof). The number of misplaced tiles is easier to define for a given state $S$, as it's just the total number of tiles not in their goal configuration state. \\
+
+
+An N-Puzzle state, instead of being viewed as a grid, can also be repsresented as a vector with $N + 1$ elements. The 'blank space' can be represented by the digit $N + 1$.  Looking at Figure-1 again, which is an instance of the 8-puzzle, it can be represented as (3,8,2,4,5,6,1,7,9). 
+
+\subsection{Subsymbolic vs. Symbolic Paradigm}
+In modeling human intelligence, there are two primary paradigms, the symbolic and the subsymbolic. The symbolic paradigm is based on manupulating symbols according to defined syntax, where as the subsymbolic is generally though of as parallel computation of several computational input units (called neurons). Both approaches have there advantages and disadvantages.\\
+
+ The mathematical definition of a language generally consists of the three ingredients: 1) a set of symbols 2) A set of rules governing the symbols arrangement in space 3) The transformation of these symbols in time. Rules 2 and 3 combined are known as the syntax of the language. Symbolic system are about modeling intelligence based upon formal systems. \\
+
+The subsymbolic paradigm instead focuses on the outputs of a group of computational units processing information in parallel. A sort of statistical filter if you will. Artificial neural networks are an example of a subsymbolic system which gives interesting classification results based on input. \\
+
+The Manhattan Distance heuristic is a symbolic heuristic because it's computed by a fixed rule. What we'd like to do is develop a subsymbolic heuristic that can either replace the manhattan distance altogether or perform as least as well as it. Part of the criterion for performing 'at least as well' is related to criterion such as the number of nodes expanded (explored) or generated (added to the frontier) during the course of searching for a solution. \\
+
+\section{Subsymbolic aka 'Neural' Heuristics}
+The primary goal for this project is to attempt and develop a subsymbolic heuristic for use with the 8-puzzle. The 8-puzzle was chosen because it is the least time consuming of the N-puzzles to generate data for.  \\
+
+\subsection{Generating and Preprocessing the Testing Data}
+Using the Python programming language, 20,000 random, allowable states of the 8-puzzle were created, solved and stored in a MongoDB instance using the A* algorithm. The primary fields of interest for each solution were the initial state for the problem, the initial state optimal path cost, its manhattan distance heuristic, the number of nodes added to the frontier over the course of the search, the total number of nodes explored, and the time the search took in milliseconds (on a Asus ultrabook with 4GB Intel i53317U @ 1.7 GHZ). The data for the solution set was as follows: \\
+
+\begin{table}[H]
+\caption{Results on the entire dataset}
+\centering
+\begin{tabular}{c c c c c }
+Field & min & max & mean & std \\
+\hline
+md & 4 & 24 & 15.975 & 3.17 \\ 
+
+path cost& 3  & 31 & 22.04 & 3.41\\
+
+frontier & 9 & 35076 & 2768.03 & 3150\\
+
+explored & 4 & 24287 & 1783.35 & 2082.42\\
+
+times ($\mu$s) & 205 & 999756 & 112685.84 & 161173.28 \\
+\end{tabular}
+\end{table}
+
+Some basic checks were performed on the data set to ensure validity. For example, it was tested whether or not the manhattan distance value for a state was indeed less than or equal to the optimal path cost solution that was found. Also, the maximum value for an optimal solution to the 8-puzzle is known to be 31, so clearly a solution with a path-cost greater than 31 would indicate an underperforming graph search algorithm. 
+Of the 20,000 solutions, 12,000 were set aside for training, 2,000 for tuning, 3,000 for testing within the neural networks, and another 3000 instances were reserved for testing the weights developed using backpropagation in Python. \\
+
+Using the Octave program generate\_data.m and the npuzzle\_solutions.txt file, 4 different targets were defined for each state as follows: \\
+
+\begin{table}[H]
+\centering
+\caption{Different targets for neural networks}
+\begin{tabular}{c c c c}
+  no. & symbol & name & description \\
+\hline
+  1 & $h*_{ann}(n)$ & optimal & Path cost of the optimal solution for the state \\
+  2 & $diff_{ann}(n)$ & difference & optimal - md \\
+  3 & $avg_{ann}(n)$  & average & $\frac{(optimal + md)}{2}$ \\
+  4 & $md_{ann}(n)$ & md & Manhattan Distance of the state \\
+\end{tabular}
+\end{table}
+
+The statistics for the targets can be found in the file target\_stats.txt in the code/data folder. 
+
+\begin{table}[H]
+\centering
+\caption{Stats for targets}
+\begin{tabular}{c c c c c}
+ hn & min  & max & mean & std \\
+\hline
+ $h*_{ann}(n)$ & 5 & 31 & 22.055 & 3.379  \\
+ $avg_{ann}(n)$ & 5 & 26 & 18.035 & 2.764\\
+ $diff_{ann}(n)$  & 0 & 18 & 8.0404 & 2.973  \\
+ $md_{ann}(n)$ & 4 & 22 & 14.014 & 2.878\\
+\end{tabular}
+\end{table}
+
+Various forms of scaling the output features were attempted; generally, scaling from 0 to 1 for the input seemed to be the best choice. \\
+
+Each 9 element input state vector $S$ was transformed into an 81 element input vector where the $(9 \times k) + t$ bit was high if and only if $S[k] = t$. This idea was taken from the paper (citation needed). The drawback is that the input size grew quadratically, but the upside is that the larger dimensionality allows better differentiation between highly similar vectors (such as $(1, 2, 3, 4, 5, 6, 7, 9, 8)$ and $(1, 2, 3, 4, 5, 6, 7, 8, 9)$.
+
+\section{ANN: Using Neural Networks}
+\subsection{Architecture and Methodology}
+
+The general topology used for the neural networks was 81-h-1, where $h \in {5, 10, 15}$.
+Three different configuration files were formulated using the bpconfig.m file. They were similar overall, the main difference being the number of nodes in the hidden layer. The files are contained in the py ann1\_xh\_s.txt where x is the number of nodes in the hidden layer.
+
+The learning rate was held at $\alpha = 0.1$ and the momentum at 0.8. The number of epochs varied between 100 to 1000, as well as the number of samples taken per epoch. With 12,000 training samples, 1000 epochs with 64 samples per epoch would give each vector around 5 runs through the neural network, enough to start some training.   \\
+
+The program train\_bp.m was written to run all 3 configuration files for the 4 different targets (12 runs in all), and save the weights yielding the best result among the three networks for each target in a file of the form ann\_weights\_n\_m.txt file where n is 1 or 2 (the layer of the weights) and m is the number for one of the 4 targets. The SS values from bptestap.m function was saved as well as the number of neurons in the hidden layer in the files ann\_results.txt. In the case of the manhattan distance heuristic as the target, the hidden layer with 15 units yielded the best result, but in the other 3 cases all three cases 5 hidden units worked: \\
+
+\begin{table}[H]
+\centering
+\caption{SS and Num. Hidden Layers}
+\begin{tabular}{c c c c c }\hline 
+\hline
+ stat & optimal & difference & average & md \\
+\hline
+ SS & 0.0105& 0.0205& 0.0050 & 0.0019 \\
+ Hidden Layers & 5 &5  & 5 &  15 \\
+\hline
+\end{tabular}
+\end{table}
+
+Performance on the networks were solid. Here are some images form the training sessions: \\
+
+ \begin{figure}[h!]
+      \centering
+      \includegraphics[width=110mm]{../py/data/img/graph_file_5_average.jpg}
+      \caption{Training results for target 'average' 5 hidden layers}
+      \label{overflow}
+ \end{figure}
+     
+ \begin{figure}[h!]
+      \centering
+      \includegraphics[width=110mm]{../py/data/img/graph_file_5_optimal.jpg}
+      \caption{Training results for target 'optimal' 5 hidden layers}
+      \label{overflow}
+ \end{figure}
+
+    
+ \begin{figure}[h!]
+      \centering
+      \includegraphics[width=110mm]{../py/data/img/graph_file_5_difference.jpg}
+      \caption{Training results for target 'difference' 5 hidden layers}
+      \label{overflow}
+ \end{figure}
+
+ \begin{figure}[h!]
+      \centering
+      \includegraphics[width=110mm]{../py/data/img/graph_file_15_md.jpg}
+      \caption{Training results for target 'md' 15 hidden layers}
+      \label{overflow}
+ \end{figure}
+
+\subsection{Testing Reults}
+The testing for the weights developed through the neural networks was done in Python. The four sets of weights files were each attempted for the optimal, difference, average and manhattan distance targets by using them through a method called \textit{ann} located in the NPuzzleProblem class found in Problem.py. The file new\_heuristic\_stats.py records the performance of the new heuristics that have been developed and compares their statas to the original two symbolic functions originally used to solve the states. \\
+
+There were 2 different ways these new subsymbolic functions were going to be tested in relation to a graph function using a cost function $f(n) = g(n) + h(n)$. One way would be as $f(n) = h(n)$, which essentially would turn this into a greedy best-first search; however this approach is only taken when the target we trained on was the 1) optimal or  2) average target, so essentially we were testing a function that was approximated on an optimal path $h_{ann}*(n)$. We tested $md_{ann}(n)$, the approximated manhattan distance function simply in replace of the symbolic manhattan distance function, and $diff_{ann}(n)$ heuristic function added to the sumbolic $md(n)$ for a mixture of symbolic and subsymbolic systems.
+
+What proved to be interesting was using some of the developed heuristic functions as cost functions instead of heuristic functions. Basically, the search ceased to be optimal, but instead the number of nodes explored and expanded dropped considerably. So there appears to be a trade off here from optimality to reduced amount of work searching the state space to find the solution. We can see the difference in statistics between this and the already generated optimal solution. \\
+
+Using a subset of the 3000 testing samples still left over from the dataset, we can get an idea of the effectiveness of these new neural heuristics. For the syubsymbolic heuristi $md_{ann}(n)$, we still achieve optimality, but must both generate and expands a large amount of nodes.
+The data can be found in the file /py/data/heuristic\_test\_stats.txt. 
+
+\begin{alltt}
+\input{../py/data/heuristic_test_stats.txt}
+\end{alltt}
+\section{Summary and Conclusions}
+Some rather interesting observations in the data. Using 500 training examples, we compare the results of the developed subsymbolic heuristics with the symbolic manhattan distance heuristic. First let's compare the number of explored nodes and nodes added to the frontier for a few of the trained networks, as well as the manhattan distance. 
+
+\begin{table}[h!]
+\centering 
+\caption{$avr_{ann}(n)$ vs $h*_{ann}(n)$ vs. md(n)} 
+\begin{tabular}{c c c c c c}
+ field\ target & optimal & $avr_{ann}(n) $ & $md(n)$ & $diff_{ann}(n)$ & $md_{ann}(n)$\\
+\hline
+explored (mean) & 195.906 & 157.954 & 1025.438 & 1844.442 & 4029.55\\
+frontier (mean) & 357.758 & 284.714 & 1598 & 2789.55 & 5943.522\\
+path cost (mean)      & 49.502 & 59.902 & 22.06 & 21.878 & 21.878\\
+\end{tabular}
+\end{table}
+So clearly we see that as the number of nodes expanded or generated increases, we see a decrease in the path cost for finding a solution.
+
+As you can see, the average path cost for a solution using $h*_{ann}(n)$ is around 37, and all optimal solutions for the 8-Puzzle are capped at 31, don't have an optimal solution, however, the number of nodes generated and explored is much smaller so it does a reduced amount of work. A similar find was located in using the $avr_{ann}(n)$ 
+
+\begin{table}[h!]
+\centering
+\caption{Compare symbolic vs. subsymbolic md(n)}
+\begin{tabular}{c c c c }
+ results & $md_{ann}(n)$  & manhattan distance \\
+\hline
+ hn(n) &   14.1838 & 13.87  \\
+explored &  4029.214 &  1025.438 \\
+path-cost (mean)& 21.878 & 22.006 \\
+frontier (mean) & 5943.522 & 1598.834 \\ 
+\end{tabular}
+\end{table}
+
+So in the end, it was possible to train a neural function to approximate a heuristic function, but to a dramatic increase in the number of nodes expanded and generated. So there is more work being done in this case. But the heuristics appears to possess the property of optimality. So far there hasn't been a subsymbolic heuristic that retains optimality and improves upon the ability of the symbolic manhattan distance function. 
+I believe the primary reason for this revolves around the concept of consistency. I don't believe that enough effort was made to ensure the new heuristic functions were consistent. There is only a difference of 1 in the symbolic manhattan distance between two adjacent nodes in the state space, because we're only concerned about the manhattan distance between blocks in the puzzle, not the blank space. So we don't calculate its change when determining the manhattan distance of a state, which means when mone move is made, the manhattan distance only changes by 1 between adjacent states. This isn't necessarily true with these subsymbolic function.  
+
+It was interesting to see that a successful cost function can be produced by a neural network, at least in terms of reducing the number of nodes to be expanded while searching. If there is always this kind of trade off between length of the solution and number of nodes generated and expanded during search is an open question at this point.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{npuzzle}
+
+\end{document}
