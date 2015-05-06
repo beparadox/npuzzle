@@ -1,6 +1,6 @@
 """ A class for npuzzle heuristic functions """
 class NPuzzleHeuristics(object):
-    """ For use with the NPuzzleProblem class found in Problem.py
+    """ For use with the NPuzzleProblem class
     """
     def __init__(self, hnfun='md', dim=3):
         """ initialze the classes heuristic function
@@ -28,14 +28,14 @@ class NPuzzleHeuristics(object):
             self.dim = dim
             self.size = dim * dim
             self.goaldict = dict(zip(range(1, self.size + 1), range(0, self.size)))
+            self.md_table = self.init_md_table()
         except KeyError as err:
             print "Invalid hnfun value given for NPuzzleHeuristics: %s" % err
             exit(0)
 
     def init_md_table(self):
         """
-        @param dim dimension of the problem
-        @return dict
+        Returns: dictionary of integers as keys and lists as values
 
         Initialize md_table
         md_table is the manhattan distance table. It sets the md_table
@@ -74,13 +74,17 @@ class NPuzzleHeuristics(object):
 
     def manhattan_distance(self, node):
         """
+        Args:
+            node: instance of the Node class found in Problem.py. We need
+            the state property of the node
+
+            
 	manhatan_distance expects a list to perform its calculation.
         current_node.state is a tuple
 	"""
         state = node.state
         size = len(state)
-        md_table = self.init_md_table()
-        return sum([md_table[i][self.goaldict[state[i]]]\
+        return sum([self.md_table[i][self.goaldict[state[i]]]\
                 for i in range(0, size)\
                 if state[i] != size])
 
@@ -90,18 +94,25 @@ class NPuzzleHeuristics(object):
         Could be only
         a single key
         """
-        md_table = self.init_md_table()
-        return sum([md_table[key][self.goaldict[dictionary[key]]]\
+        return sum([self.md_table[key][self.goaldict[dictionary[key]]]\
                 for key in dictionary.keys()])
+
+    @classmethod
+    def md_element(cls, element, current_index, dim):
+        """get the manhattan distance for a particular element from
+        its location in the goal state"""
+        goal_index = element - 1
+        return abs(current_index / dim - goal_index / dim) +\
+                abs(current_index % dim - goal_index % dim)
+
 
     def misplaced_tiles(self, node):
         """ heuristic function calculating number of tiles not in
-        their 'home' position"""
+        their 'home' position
+        
+        Args:
+            node: """
         state = node.state
-        #print state
-        print state
-        print sum(0 if index == self.goaldict[element] else 1 for index,\
-                element in enumerate(state))
         return sum(0 if index == self.goaldict[element] else 1 for index,\
                 element in enumerate(state))
 

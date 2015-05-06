@@ -1,19 +1,18 @@
 """ get_solutions.py
 
-Get solutions to valid n-puzzle states. 
+Get solutions to valid n-puzzle states.
 There are two options:
 either select random states using get_random_solutions
 provide a state to get_solution,
 or a list of states to get_solutions
 
 @author:     Bambridge E. Peterson
-@updated:    10/23/14 """
-
+@updated:    4/21/15 """
 
 from search import astar_search, idastar_search, build_search_tree
 from NPuzzleProblem import NPuzzleProblem, get_unsolvable_problem
 from NPuzzleHeuristics import NPuzzleHeuristics
-from generate_init_states import generate_init_states as gistates
+from generate_init_states import generate_init_states as gi_states
 import sys
 import getopt
 
@@ -22,9 +21,18 @@ def usage():
     print "usage: <%s> -n <int:num_of_states>" % (__name__)
     sys.exit(0)
 
-def get_random_solutions(num, dim=3, heurfun='md', stats=False):
-    """ get solutions to num of random initial states"""
-    random_states = gistates(num)
+def get_random_solutions(num=1, dim=3, heurfun='md', stats=False):
+    """ Generate num of random initial states and get solutions
+        Args:
+            num: positive integer indicating the number of states
+            you want to solve for
+
+            dim: dimension of the n-puzzle. 2, 3 or 4
+
+            heurfun: heuristic function to use for the search
+            algorithm. See search.py and NPuzzleHeuristics.py
+    """
+    random_states = gi_states(num, dim)
     solutions = []
 
     for state in random_states:
@@ -38,7 +46,21 @@ def get_random_solutions(num, dim=3, heurfun='md', stats=False):
     return solutions
 
 def get_solution(state, dim=3, heurfun='md', stats=False):
-    """ Get a solution for a possible state """
+    """ Get a solution for a given possible states.
+
+    Args:
+        states:  a tuple of integers from 1 to dim^2
+
+        dim:     a positive integer. Either 2, 3 or 4
+
+        heurfun: the heuristic function to use in the search
+
+        stats:   should the number of nodes explored or added
+        to the frontier be recorded
+
+    Return:
+        a single solution node
+    """
     goal = tuple(range(1, dim*dim + 1))
     npp = NPuzzleProblem(state, goal, dim=dim)
     nph = NPuzzleHeuristics(hnfun=heurfun, dim=dim)
@@ -56,7 +78,22 @@ def get_solution(state, dim=3, heurfun='md', stats=False):
     return solution
 
 def get_solutions(states, dim=3, heurfun='md', stats=False):
-    """ Get solutions for a list of possible states """
+    """ Get solutions for a list of possible states. Calls get_solution
+    above.
+
+    Args:
+        states:  a tuple of integers from 1 to dim^2
+
+        dim:     a positive integer. Either 2, 3 or 4
+
+        heurfun: the heuristic function to use in the search
+
+        stats:   should the number of nodes explored or added
+        to the frontier be recorded
+
+    Return:
+        list of solution nodes
+    """
     solutions = []
 
     for state in states:
@@ -65,23 +102,36 @@ def get_solutions(states, dim=3, heurfun='md', stats=False):
     return solutions
 
 def get_statnodes(solutions):
-    """ solutions should be a list of solution nodes for various initial
-        states of the puzzle
+    """
+    Return a list of statistic nodes for each solution
 
-        the nodes here represent some basic statistics for the solution
-        to the given intial state. Include:
+    Args: 
+        solutions. List of solution nodes for various states
+
+    Returns:
+        list of stat nodes, one for each solution
+
+    Statistic nodes represent some basic statistics for the solution
+    to the given intial state. Include:
 
         hfname - name of the heuristic function used
-        hfn - the output of the heuristic function for the initial state
+
+        hfvalue - the output of the heuristic function for the initial state
+
         hn_path - the output of the heuristic function for each of the
           intermediate states on the path from the state to the goal
+
         state - the starting state
+
         solution -  list of actions taken to get from start to the goal nde
+
         frontier - number of items added to the frontier
+
         explored - number of states added to the explored set
+
         path_cost - depth of the state from the goal node
-        """
-    solution_nodes = []
+    """
+    stat_nodes = []
     for goalnode, explored, frontier in solutions:
         node = {}
         node['state'] = goalnode.root_node().state
@@ -97,13 +147,14 @@ def get_statnodes(solutions):
         node['number_explored'] = explored
         # total number added to the frontier before goal node was found
         node['added_frontier'] = frontier
-        solution_nodes.append(node)
+        stat_nodes.append(node)
 
-    return solution_nodes
+    return stat_nodes
 
 def main():
     """ For when the file is called itself, not as a module.
-    Right now, simply prints a list of random states"""
+    Right now, simply prints a list of random states,
+    as well as their solutions"""
     num = 1
     (options, value) = getopt.getopt(sys.argv[1:], "-n")
     for option in options:
@@ -113,7 +164,7 @@ def main():
             except ValueError:
                 usage()
 
-    states = list(gistates(dim=3, num=num))
+    states = list(gi_states(dim=3, num=num))
     print "printing states..."
     for state in states:
         print state
@@ -123,10 +174,6 @@ def main():
         node = get_solution(state, stats=True)
         print node
         print get_statnodes([node])
-
-    print "building search tree..."
-    tree = gs_search_tree(2)
-    print tree
 
 if __name__ == '__main__':
     main()

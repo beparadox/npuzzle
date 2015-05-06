@@ -124,7 +124,7 @@ class Node(object):
 
     def child_node(self, problem, action):
         """ get a node the can be reached from the current
-        node through the action"""
+        node by application of the action"""
         nextstate = problem.result(self.state, action)
 
         return Node(nextstate, parent=self, action=action,\

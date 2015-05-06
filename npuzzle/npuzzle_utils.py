@@ -14,6 +14,33 @@ import numpy as np
 from NPuzzleProblem import get_unsolvable_problem
 from search import build_search_tree
 from Queues import FIFOQueue
+from NPuzzleHeuristics import NPuzzleHeuristics
+
+def acceptable_state(state):
+    """ determine if a tuple is an acceptable state for an npuzzle.
+
+    Args:
+        state - a tuple of integers. The length should be equal to the square
+        of a positive integer n. Generally 4, 9, 16, or 25. The numbers should
+        be all integers from 1 to n in an acceptable state (see below).
+
+    Returns:
+        true if acceptable, false otherwise.
+
+    When is an npuzzle state considered acceptable? When the number of
+    inversions plus the manhattan distance of the 'blank space' from it's
+    position in the goal configuration is even.
+    """
+    size = len(state)
+    #assert type(state) == tuple, 'state is not acceptable'
+    distance = NPuzzleHeuristics.md_element(size, state.index(size),\
+            int(np.sqrt(size)))
+    #state, inversions = count_inversions(list(state), size)
+    inversions = count_inversions_n2(list(state))
+    if ((distance + inversions) % 2 == 0): 
+        return True
+    else:
+        return False
 
 def get_solution(node):
     """ """
@@ -55,7 +82,7 @@ def solution_path_states(state, actions):
     Allowable actions:
     1 move right
     -1 move left
-    2 move up
+    2 move up:
     -2 move down
     """
     states = [state]
@@ -103,9 +130,28 @@ def result(state, action):
     return tuple(state)
 
 def invert_solution(solution, func=lambda x: -x):
-    """ the solution is a list detailing the actions
+    """ Get the inverse of the solution
+    Args:
+        solution: the solution is a list detailing the actions
     taken to move from the goal state to the initial state.
-    We want to invert that"""
+
+    Returns:
+        the inversion of the solution
+
+    What does it mean to invert a solution? For starters, always
+    look on the bright side of life. After that, keep in mind that a
+    solution involves moving tiles, one at a time, into the empty space,
+    until the desired state is reached.
+    
+    I imagined it the other way around: moving the blank space around the
+    board. Integer values represent a move of the blank, or empty, space.
+    1  one space to the right
+    -1 one space to the left
+    2  up one space
+    -2 down one space
+    
+    So a solution is a list of integers. To invert the solution, you invert
+    the sign for each number, and then reverse the entire list"""
     solution = [func(x) for x in solution]
     solution.reverse()
     return solution
@@ -149,8 +195,20 @@ def init_md_table(dim=3):
     return md_table
 
 def bsinsert_desc(thelist, val, imin, imax):
-    """ insert val into a thelist using the bounds of imin
-    and imax. A binary insert algorithm is used.""" 
+    """ binary search insert. insert val into a thelist using the bounds
+    of imin and imax.
+
+    Args:
+        thelist: the list of elements to insert a value into
+
+        val:     the value to be inserted
+
+        imin:    minimum index value in the list
+
+        imax:    maximum index value in the list
+    
+    
+    """
     if imax < imin: 
         print "nothing inserted"
         return
@@ -181,8 +239,15 @@ def bsinsert_desc(thelist, val, imin, imax):
         bsinsert_desc(thelist, val, imin, imax)
 
 def count_inversions_n2(thelist):
-    """ O(n^2) manner to count inversions. Yip-pee.
-    Only used to count inversions for small lists < 100 elements
+    """ O(n^2) version of counting inversions.
+
+    Args:
+        thelist: list of intgers in which we count inversions
+
+    Returns:
+        num_inversions: integer which counts the number of inversions
+   
+    This should be used on small lists
     """
     num_inversions = 0
     length = len(thelist)
@@ -193,68 +258,69 @@ def count_inversions_n2(thelist):
 
     return num_inversions
         
-def count_inversions(l, n):
-    '''
-    @name: count_inversions 
-    param:  l - list of numbers to be sorted
-    param:  n - lenght of the list 
-    returns
-    Description: 
-    '''
-    if n == 1: 
-        return (l, 0)
+def count_inversions(integers, num):
+    """ Count the number of inversions in a sequence of integers
+    
+    Args:
+        integers: a sequence of integers
+      
+    """
+    if num == 1: 
+        return (integers, 0)
     else:
-        ls = len(l)
-        ls1 = len(l[0:ls/2])
-        ls2 = len(l[ls/2:])
+        ls = len(integers)
+        ls1 = len(integers[0:ls/2])
+        ls2 = len(integers[ls/2:])
 
-        if ls1 + ls2 != n:
-            print "Error! ls1 +ls2 != n"
-            exit(1)
-
-        (B, x) = count_inversions(l[0:ls1], ls1)
-        (C, y) = count_inversions(l[ls1:], ls2)
-        (D, z) = merge_and_csplinv(B,C,ls1 + ls2)
+        (B, x) = count_inversions(integers[0:ls1], ls1)
+        (C, y) = count_inversions(integers[ls1:], ls2)
+        (D, z) = merge_and_csplinv(B, C, ls1 + ls2)
         return (D, x + y + z)
 
-def merge_and_csplinv(l1, l2, n): 
-    '''
-    name: merge_and_csplinv
-    '''
-    len1 = len(l1)
-    len2 = len(l2)
-    if len1 + len2 != n: 
-        print "Error! %d + %d != %d" % (len1, len2, n)
+def merge_and_csplinv(list1, list2, num): 
+    """ Merge to sorted lists of integers into one sorted list,
+    and count the number of inversions between the two lists
+
+    Args:
+        list1: first sorted list
+        
+        list2: second sorted list
+
+        num: number of elements in both lists
+
+    Returns:
+        tuple consisting of the merged list and the number of inversions
+        between the two lists
+    """
+    len1 = len(list1)
+    len2 = len(list2)
+    if len1 + len2 != num: 
+        print "Error! %d + %d != %d" % (len1, len2, num)
         exit(1)
 
-    p1 = 0
-    p2 = 0
+    ptr1 = 0
+    ptr2 = 0
     inversions = 0
     newlist = []
-
-    # nastiest code ever!
-    # TODO: need to fix this while loop
-    while p1 + p2 < n:
-        if p1 < len1: 
-            if p2 < len2:
-                if l1[p1] <= l2[p2]:
-                    newlist.append(l1[p1])
-                    p1 += 1
-                else:
-                    newlist.append(l2[p2])
-                    inversions += len1 - p1
-                    p2 += 1
-            else:
-                newlist.append(l1[p1])
-                p2 += 1
+    while ptr1 + ptr2 < num:
+        if ptr1 > len1 - 1:
+            newlist.append(list2[ptr2])
+            ptr2 += 1
+        elif ptr2 > len2 - 1:
+            newlist.append(list1[ptr1])
+            ptr1 += 1
+        elif list1[ptr1] <= list2[ptr2]:
+            newlist.append(list1[ptr1])
+            ptr1 += 1
         else:
-            newlist.append(l2[p2])
-            p2 += 1
-        
+            newlist.append(list2[ptr2])
+            ptr2 += 1
+            inversions += len1 - ptr1
+       
     return (newlist, inversions)
 
 def manhattan_distance(thelist, goallist, *args):
-    """ this function has limited usefulness. It's purpose is to find
+    """It's purpose is to find
     the manhattan or taxicab distance of an element from it's intended
     destination or goal place. It can also return the sum of the manhattan
     distnces of all elements in the list.
@@ -322,18 +388,42 @@ def manhattan_distance(thelist, goallist, *args):
     return
 
 def transform_vector(state):
-    """ transform an npuzzle state (tuple) into
-    an ndarray from numpy"""
+    """ transform an npuzzle state (tuple) of size s into
+    an ndarray from numpy of 1's and 0's of size s^2.
+    
+    Args: 
+        state: tuple of size s that is an acceptable state for an npuzzle
+        
+    Returns:
+        newv:  numpy array of size s^2 of 1's and 0's
+
+    the new array is of size s^2. It helps to visualize this as an array
+    of s arrays, each of size s, in linear order.
+    
+    For each of the s 'subarrays' of size s, all elements are 0 except
+    for one, which equals 1. Which one depends upon the value of index 
+    i in the state.
+    
+    For the ith 'subarray' in the new array, the state[i] elements in
+    this subarray equals 1. 
+    
+    So, suppose the state was (1, 2, 3, 4). The new array will be:
+        [1, 0, 0, 0,| 0, 1, 0, 0,| 0, 0, 1, 0, |0, 0, 0, 1].
+        
+    For [4, 3, 2, 1], it would be:
+    [0, 0, 0, 1,|0, 0, 1, 0|, 0, 1, 0, 0|, 1, 0, 0, 0]
+
+    I added vertical bars for clarification. The first four elements
+    correspond to the number 4 in the given state
+    """
     arr = np.array(state)
     length = len(arr)
-    newv = [0 for i in range(length*length)]
+    newvec = [0 for i in range(length*length)]
 
     for i in range(length):
-        #print i
-        t = arr[i]
-        newv[length*i + t - 1] = 1
+        newvec[length*i + arr[i] - 1] = 1
 
-    return newv
+    return newvec
       
 def scale(state, min_t, max_t):
     """ scale each value of state using a min and max value"""

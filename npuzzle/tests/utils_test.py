@@ -1,7 +1,7 @@
 import unittest
 import sys
 sys.path.insert(0, '../src')
-import npuzzle_utils as npu
+from npuzzle import npuzzle_utils as npu
 import random 
 
 class TestNPuzzleUtils(unittest.TestCase):
@@ -33,25 +33,5 @@ class TestNPuzzleUtils(unittest.TestCase):
             print str1
 
     def test_count_inversions_sort(self):
-        NUM_TESTS = 1    
-        MAX = 1000
-
-        for i in range(NUM_TESTS):
-            ranint = random.randint(1, MAX)
-            totest1 = range(ranint)
-            random.shuffle(totest1)
-
-            totest2 = range(ranint)
-            print sorted(totest1) == totest2
-            res1 = npu.count_inversions(totest1, len(totest1))[0]
-
-            print res1 == totest2
-
-            if not res1 == totest2:
-                print self.where_lists_differ(res1, totest2)
-
-            
-            assert res1 == totest2, 'lists are not equal'
-          
-test = TestNPuzzleUtils()
-test.test_count_inversions_sort()
+        """ Todo: test count_inversions"""
+        pass

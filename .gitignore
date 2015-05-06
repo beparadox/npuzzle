@@ -3,3 +3,8 @@ research
 *.swp
 oldsrc
 conf
+*.pyc
+build
+dist
+npuzzle.egg-info
+*.egg

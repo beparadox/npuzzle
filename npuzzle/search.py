@@ -239,7 +239,7 @@ def idastar_search(problem, heurfun=None, states=False, stats=True):
     """ TODO: implement this algorithm"""   
     return True
 
-def build_search_tree(problem, function, depth=31):
+def build_search_tree(problem, func=None, depth=31):
     """ TODO: build a search tree"""
     frontier = FIFOQueue()
     frontier.append(Node(problem.initial))
@@ -250,33 +250,13 @@ def build_search_tree(problem, function, depth=31):
         if node.depth > depth:
             return node.parent
 
-        function(node)
+        if func:
+            func(node)
 
         explored.add(node.state)
         frontier.extend(child for child in node.expand(problem) 
                         if child.state not in explored
                         and child not in frontier)
 
-    print "len(explored) = " + str(len(explored))
-    function(False)
-
-def build_search_tree2(problem, depth=31):
-    """ TODO: build a search tree"""
-    frontier = FIFOQueue()
-    frontier.append(Node(problem.initial))
-    explored = set()
-    nodes = []
-    while frontier:
-        node = frontier.pop()
-
-        if node.depth > depth:
-            return nodes 
-
-        nodes.append(node)
-        explored.add(node.state)
-        frontier.extend(child for child in node.expand(problem) 
-                        if child.state not in explored
-                        and child not in frontier)
-
-    print "len(explored) = " + str(len(explored))
-    return nodes 
+    if func:
+        func(False)

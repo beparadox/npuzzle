@@ -43,10 +43,17 @@ class NPuzzleProblem(Problem):
             return 1
 
     def actions(self, state):
-        """
-        all actions are for the blank tile which is the
-        largest numbered
-            try changing this
+        """Determine actions that can be applied on the given state
+
+        Args:
+            a sequence of integers representing a state in the NPuzzle
+
+        Return:
+            a list of integers representing the actions that can be applied
+            to this state
+
+        all actions are a direction to move the blank tile (or empty space) 
+        which is the largest value in the state:
             left: -1
             right: 1
             up: 2
@@ -77,14 +84,22 @@ class NPuzzleProblem(Problem):
         return actions
 
     def result(self, state, action):
-        """ s is the state,
+        """ Get the resulting state from applying action to state
+
+        Args:
+            state: the state currently in,
+
+            action: the action to apply to the current state
+
+        Returns:
+            the resulting state after applying action to state
+
         a the action. The actions are defined as:
             -1 move left (move the blank space left)
              1 move right
              2 move up
             -2 move down"""
-        state = copy(state)
-        state = list(state)
+        state = list(copy(state))
         dim = self.dim
         size = self.size
 
