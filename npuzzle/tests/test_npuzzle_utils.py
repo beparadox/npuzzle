@@ -67,7 +67,20 @@ class TestNPuzzleUtils(unittest.TestCase):
         self.assertEquals(8, i1)
         self.assertEquals(range(1, 6), rl1)
 
+        l1 = [2, 1, 3, 4, 5]
+        rl1, i1 = count_inversions(l1, len(l1))
+        self.assertEquals(1, i1)
+        self.assertEquals(range(1, 6), rl1)
+
     def test_acceptable_states(self):
-        size = 9
+        state = (1, 2, 3, 4, 5, 6, 7, 8, 9)
+        self.assertTrue(acceptable_state(state))
+
         state = (1, 2, 3, 4, 5, 6, 7, 9, 8)
+        self.assertTrue(acceptable_state(state))
+
+        state = (1, 2, 3, 4, 9, 6, 7, 5, 8)
+        self.assertTrue(acceptable_state(state))
+
+        state = (1, 9, 3, 4, 2, 6, 7, 5, 8)
         self.assertTrue(acceptable_state(state))

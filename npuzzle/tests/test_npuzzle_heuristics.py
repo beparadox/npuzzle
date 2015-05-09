@@ -1,4 +1,4 @@
-from npuzzle.NPuzzleHeuristics import NPuzzleHeuristics
+from npuzzle.heuristics import NPuzzleHeuristics
 import unittest
 
 class TestNPuzzleHeuristics(unittest.TestCase):

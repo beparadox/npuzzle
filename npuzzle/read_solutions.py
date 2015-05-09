@@ -7,7 +7,7 @@ import scipy.stats as stats
 import sys
 from config import DBNAME
 
-def get_solutions_collection(dbname=DBNAME, collection='solutions'):
+def get_collection(dbname=DBNAME, collection='solutions'):
     """get solution nodes from Mongo db instance
 
     Args:
@@ -26,28 +26,37 @@ def get_solutions_collection(dbname=DBNAME, collection='solutions'):
     return collection 
 
 def get_solutions_cursor():
+    """ Return a cursor to the solutions collection in the npuzzle database"""
     client = MongoClient()
     cursor = client['npuzzle']['solutions'].find()
     return cursor
 
-def get_all_states():
-    """ return all the states there currently exists solution nodes for
-    
-    Returns:
-       list: list of all states with solutions 
-    """
-    collection = get_solutions_collection()
-    states = collection.find({}, {"states": 1})
-    return np.array([node["states"] for node in states])
-
-def get_property(propname):
+def get_property(propname, collection):
     """ Get an array of all the values for a particular property of
-    solution nodes in the DB"""
-    collection = get_solutions_collection()
-    nodes = collection.find({}, {propname: 1})
+    solution nodes in the DB
+    
+    Args: 
+        propname: string. name of property
+        
+    Returns:
+        numpy array containing all values of the property defined in propname
+        
+    Possible properties include:
+        state
+        path_cost
+        hfvalue_path
+        added_frontier
+        solution
+        number_explored
+        hfname
+        hfvalue
+        size"""
+    #collection = get_solutions_collection()
+    if type(propname) == dict:
+        nodes = collection.find({}, propname)
+    else:
+        nodes = collection.find({}, {propname: 1})
     return np.array([node[propname] for node in nodes])
-
-
 
 def read_solutions(arg):
     """ call this when the script is executed from the command line """

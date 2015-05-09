@@ -1,7 +1,6 @@
 """
 Write solutions to allowable npuzzle states to the npuzzle MongoDB
 """
-
 import read_allstates
 from get_solutions import get_solutions, get_statnodes
 from pymongo import MongoClient
@@ -48,41 +47,13 @@ def get_and_write_solutions_mongodb(**kwargs):
     except ConnectionFailure as cfail:
         print "connection failure: %s" % cfail
 
-def write_solutions(dim=3):
+def write_solutions(nodes, dim=3):
     """
     Use this to write states and solution paths to the database
-    """
-    collections = {
-        2: '3puzzle_solutions',
-        3: '8puzzle_solutions',
-        4: '15puzzle_solutions',
-        5: '24puzzle_solutions'
-        }
-    try:
-        client = MongoClient()
-        collection = client['npuzzle'][collections[dim]]
 
-        def insert_node(node):
-            if node:
-                collection.insert({
-                    "state": node.state,
-                    "solution": invert_solution(node.solution()) 
-                })
-            else:
-                print 'closing connection...'
-                client.close()
-
-        return insert_node
-    except KeyError as kerr:
-        print "Error in write_solutions: dim has to be 2, 3, 4 or 5"
-        return False
-    except ConnectionFailure as cfail:
-        print "connection failure: %s" % cfail
-        return False
-
-def write_solutions2(nodes, dim=3):
-    """
-    Use this to write states and solution paths to the database
+    Args:
+        nodes: a list of solution node of type problem.Node
+        
     """
     collections = {
         2: '3puzzle_solutions',
@@ -107,7 +78,6 @@ def write_solutions2(nodes, dim=3):
     except ConnectionFailure as cfail:
         print "connection failure: %s" % cfail
         return False
-
 
 def usage():
     """ print usage to command line"""

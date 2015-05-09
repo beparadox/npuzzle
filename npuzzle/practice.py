@@ -1,9 +1,9 @@
 """ practice with the NPuzzle Problem"""
 import sys
-import NPuzzleProblem as NPP 
-import NPuzzleHeuristics as NPH
+from problem import NPuzzleProblem as NPP, get_unsolvable_problem 
+from heuristics import NPuzzleHeuristics as NPH
 import search
-from Queues import FIFOQueue
+from queues import FIFOQueue
 from npuzzle_utils import solution_path_states, invert_solution 
 from pymongo import MongoClient
 from write_solutions import write_solutions, write_solutions2
@@ -56,15 +56,10 @@ def bfunc():
     #print_features(node)
     print_search_tree(node, nph)
 
-def sol1(dim, depth):
-    npp = NPP.get_unsolvable_problem(dim=dim)
-    func = write_solutions(dim=dim)
-    search.build_search_tree(npp, func, depth=depth)
-
 def sol2(dim, depth):
-    npp = NPP.get_unsolvable_problem(dim=dim)
-    nodes = search.build_search_tree2(npp, depth=depth)
-    write_solutions2(nodes, dim=dim)
+    npp = get_unsolvable_problem(dim=dim)
+    nodes = search.build_search_tree(npp, depth=depth)
+    write_solutions(nodes, dim=dim)
 
 def main(arg):
     """ run this from command line
@@ -81,7 +76,7 @@ def main(arg):
     DEPTH = 31 
     if arg:
         print "running sol1..."
-        sol1(DIM, DEPTH)
+        sol2(DIM, DEPTH)
     else:
         print "running sol2..."
         sol2(DIM, DEPTH)

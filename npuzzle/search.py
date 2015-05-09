@@ -6,8 +6,8 @@ Artificial Intelligence: A Modern Approach
  url: http://aima-python.googlecode.com/svn/trunk/search.py
 """
 
-from Queues import Stack, FIFOQueue, PriorityQueue
-from Problem import Node
+from queues import Stack, FIFOQueue, PriorityQueue
+from problem import Node
 import sys
 
 def if_(test, result, alternative):
@@ -240,7 +240,15 @@ def idastar_search(problem, heurfun=None, states=False, stats=True):
     return True
 
 def build_search_tree(problem, func=None, depth=31):
-    """ TODO: build a search tree"""
+    """ Build a search tree for a given problem.
+    
+    Args:
+        problem - problem to be solved.
+
+        func - a function to pass each node generated to.
+
+        depth - set the search depth based on the path cost to the node
+    """
     frontier = FIFOQueue()
     frontier.append(Node(problem.initial))
     explored = set()
@@ -260,3 +268,5 @@ def build_search_tree(problem, func=None, depth=31):
 
     if func:
         func(False)
+
+    return explored

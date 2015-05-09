@@ -10,8 +10,8 @@ or a list of states to get_solutions
 @updated:    4/21/15 """
 
 from search import astar_search, idastar_search, build_search_tree
-from NPuzzleProblem import NPuzzleProblem, get_unsolvable_problem
-from NPuzzleHeuristics import NPuzzleHeuristics
+from problem import NPuzzleProblem, get_unsolvable_problem
+from heuristics import NPuzzleHeuristics
 from generate_init_states import generate_init_states as gi_states
 import sys
 import getopt
@@ -132,21 +132,25 @@ def get_statnodes(solutions):
         path_cost - depth of the state from the goal node
     """
     stat_nodes = []
-    for goalnode, explored, frontier in solutions:
+    for solution in solutions:
         node = {}
+        if type(solution) == tuple:
+            goalnode = solution[0]
+            # total number added to the explored set before goal node was found
+            node['number_explored'] = explored
+            # total number added to the frontier before goal node was found
+            node['added_frontier'] = frontier
+        else:
+            goalnode = solution
+
         node['state'] = goalnode.root_node().state
         node['size'] = len(node['state'])
         node['path_cost'] = goalnode.path_cost
         node['solution'] = goalnode.solution()
-
         node['hfname'] = goalnode.hfname
         node['hfvalue'] = goalnode.root_node().h
         node['hfvalue_path'] = goalnode.hn_path()
-
-        # total number added to the explored set before goal node was found
-        node['number_explored'] = explored
-        # total number added to the frontier before goal node was found
-        node['added_frontier'] = frontier
+        
         stat_nodes.append(node)
 
     return stat_nodes

@@ -26,7 +26,7 @@ def print_stats(name, coll):
     print ""
 
 def get_stat():
-    """ get a statistic for a particular """
+    """ get a statistic for a particular feature"""
 
 
 def stats_summary(stats):

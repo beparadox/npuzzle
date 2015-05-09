@@ -13,10 +13,9 @@ Command line arguments:
 @author: Bambridge E. Peterson
 @email:  bambridge.peterson@gmail.com
 """
-
 from npuzzle_utils import count_inversions_n2, acceptable_state
 from copy import copy
-from NPuzzleHeuristics import NPuzzleHeuristics
+from heuristics import NPuzzleHeuristics
 import sys
 import getopt
 from random import shuffle
@@ -34,9 +33,10 @@ def generate_init_states(num=1, dim=3):
       dim - dimension of the n-puzzle. 2, 3, 4, or 5 are the most common values
       
       num - number of states to return.
-    Returns: returns a list of length num containing tuples of integers,
+    Returns: returns a set of length num containing tuples of integers,
       which represent randomly generated
       allowable initial states
+
     @desc:
         An allowable state for an n-puzzle is one in which:
            number of inversions in the n + 1 elements
@@ -60,54 +60,17 @@ def generate_init_states(num=1, dim=3):
     size = dim * dim
     current_state = range(1, size + 1)
 
-    # current_state will be the variable added to the list of initial states.
-    # We shuffle it until a state satisfying the constraints is found.
-    #current_state = copy(goal_state)
-
-    # initialize the problem and define goal_state. The
-    # goal_state should be a tuple for the N-Puzzle
-    # goal_state = tuple(goal_state)
-    #nph = NPuzzleHeuristics(hnfun='md', dim=dim)
-
     # index of current iteration
     nizzle = 0
+    # shuffle the current state
     shuffle(current_state)
     while nizzle < num:
         shuffle(current_state)
         while not acceptable_state(current_state):
             shuffle(current_state)
-        init_states.add(tuple(current_state))
+        if tuple(current_state) not in init_states:
+            init_states.add(tuple(current_state))
         nizzle += 1
-
-    """
-    while nizzle < num:
-        shuffle(current_state)
-
-        # get index of 'empty space', which is the largest element in tuple
-        sizeind = current_state.index(size)
-
-        # count num_inverions with count_inversions O(n*log(n))
-        # num_inversions = count_inversions(current_state, size)[1]
-
-        # count_inversions O(n*n) - O(n^2) time
-        ni2 = count_inversions_n2(current_state)
-
-        # get manhattan distance for blank space in goal state
-        zero_mdparity = nph.md_dictionary({sizeind: size})
-
-        while (ni2 + zero_mdparity) % 2 == 1:
-            # shuffle the current state
-            shuffle(current_state)
-            # get index of 0
-            sizeind = current_state.index(size)
-            #num_inversions = count_inversions(current_state, size)[1]
-            ni2 = count_inversions_n2(current_state)
-            zero_mdparity = nph.md_dictionary({sizeind: size})
-
-        init_states.add(tuple(current_state))
-
-        nizzle += 1
-     """
 
     return init_states
 

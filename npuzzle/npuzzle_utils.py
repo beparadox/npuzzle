@@ -11,10 +11,10 @@
 from copy import copy
 from math import sqrt, floor 
 import numpy as np
-from NPuzzleProblem import get_unsolvable_problem
+from problem import get_unsolvable_problem
 from search import build_search_tree
-from Queues import FIFOQueue
-from NPuzzleHeuristics import NPuzzleHeuristics
+from queues import FIFOQueue
+from heuristics import NPuzzleHeuristics
 
 def acceptable_state(state):
     """ determine if a tuple is an acceptable state for an npuzzle.
@@ -42,34 +42,30 @@ def acceptable_state(state):
     else:
         return False
 
-def get_solution(node):
-    """ """
+def get_solution_actions(node):
+    """ get the list of actions that will take you from state in node to
+    the goal state. 
+    
+    Args:
+        node: a solution Node found after a search. Note this is not a node
+        from the database.
+
+    Returns:
+        a list of actions 
+        
+        Each action is an integer. (-1, 1, -2, 2) are the possible actions
+        """
     return invert_solution(node.solution())
 
 def get_search_tree(dim=3, depth=31):
     """ get a search tree for an NPuzzle state space of
-    given dimension"""
+    given dimension
+    
+    Args:
+        dim: integer representing the dimension"""
     npp = get_unsolvable_problem(dim)
     node = build_search_tree(npp, depth=depth)
     return node.root_node()
-
-def expand_search_tree(node, func):
-    """ go through entire seach tree using BFS.
-    func is a function you want to call on each node of the tree
-    """
-    #npp = get_unsolvable_problem(dim)
-    #node = build_search_tree(npp, depth=depth)
-    queue = FIFOQueue()
-    queue.extend([node])
-    while queue:
-        node = queue.pop() 
-        # add here what to do
-        func(node)
-        if hasattr(node, 'children'):
-            children = node.children
-            queue.extend(children)
-        else:
-            return
 
 def solution_path_states(state, actions):
     """ 
@@ -78,6 +74,11 @@ def solution_path_states(state, actions):
     the starting state.  The first element in the list should be the
     state passed to the function (the above parameter state) and the
     last element should be the goal state
+
+    Args:
+        state: tuple representing an acceptable npuzzle state
+
+        actions: a list of integers representing actions to peform on the state
 
     Allowable actions:
     1 move right
@@ -92,9 +93,26 @@ def solution_path_states(state, actions):
 
     return states
 
+def swap(state, index1, index2):
+    """ swap elements in index1 and index2 of state
+    
+    """
+    tmp = state[index1]
+    state[index1] = state[index2]
+    state[index2] = tmp
+
 def result(state, action):
-    """ s is the state,
-    a the action. The actions are defined as:
+    """ perform an action on the given state. return the new state.
+
+    Args:
+        state: tuple of an acceptable npuzzle state
+
+        action: integer representing the action to perform
+
+    Returns:
+        new state
+    
+     The actions are defined as:
         -1 move left (move the blank space left)
          1 move right
          2 move up
@@ -257,7 +275,27 @@ def count_inversions_n2(thelist):
                 num_inversions += 1
 
     return num_inversions
+
+def get_all_inversions(states):
+    """ get a numpy array of all inversions for all states
+    
+    Args:
+        states: list of acceptable npuzzle states
         
+    Returns:
+        numpy array containing number of inversions in each state"""
+    length = len(states)
+    inversions = np.array([state_num_inversions(states[i]) for i in range(0, length)])
+
+    return inversions
+
+def state_num_inversions(state):        
+    """ return the number of inversions for a given state"""
+    if type(state) == tuple:
+        state = list(state)
+
+    return count_inversions(state, len(state))[1]
+
 def count_inversions(integers, num):
     """ Count the number of inversions in a sequence of integers
     
@@ -416,12 +454,13 @@ def transform_vector(state):
     I added vertical bars for clarification. The first four elements
     correspond to the number 4 in the given state
     """
-    arr = np.array(state)
-    length = len(arr)
-    newvec = [0 for i in range(length*length)]
+    length = len(state)
+    #newvec = np.zeros((1, length*length))
+    newvec = [0 for i in range(0, length*length)]
 
     for i in range(length):
-        newvec[length*i + arr[i] - 1] = 1
+        #newvec[0][length*i + state[i] - 1] = 1
+        newvec[length*i + state[i] - 1] = 1
 
     return newvec
       
@@ -435,7 +474,6 @@ def scale(state, min_t, max_t):
         min_v = 0 
     return (max_t - min_t) * ((arr - min_v)/float((max_v - min_v))) + min_t
     
-   
 def actfun(x, funtype, par=[1,0]):
     """ define activation functions for the neural network"""
     xarr = np.array(x)
@@ -455,3 +493,7 @@ def actfun(x, funtype, par=[1,0]):
         y = 1/(1 + np.exp(-xarr/T))
 
     return y
+
+def update_db_solutions():
+    """ the db_solutions are wrong. update them! """
+    return 0
