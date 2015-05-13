@@ -19,12 +19,20 @@ class NPuzzleHeuristics(object):
                 'feed forward ann'],
 
             'svm': [
-                self.ffann,
-                'support vector machine']
+                self.svm,
+                'support vector machine'],
+
+            'inv': [
+                self.inversions,
+                'number of inversions']
             }
         try:
             self.hnfun = self.hfuns[hnfun][0]
             self.hfname = self.hfuns[hnfun][1]
+
+            if hnfun == 'svm':
+                from sklearn import svm
+
             self.dim = dim
             self.size = dim * dim
             self.goaldict = dict(zip(range(1, self.size + 1), range(0, self.size)))
@@ -151,6 +159,6 @@ class NPuzzleHeuristics(object):
         """
         pass
 
-    def svm_heur(self, node):
+    def svm(self, node):
         """ use a support vector machine developed heuristic"""
         pass
